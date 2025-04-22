@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AK Debt Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #8a8aff;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b46c1;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .chat-bubble {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+        }
+        .pulse-button:hover {
+            animation: pulse 1.5s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-700 text-gray-800 flex flex-col">
+    <!-- Header -->
+    <header class="w-full bg-white shadow-lg p-4 flex justify-between items-center sticky top-0 z-10">
+        <div class="flex items-center">
+            <div class="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-700 text-transparent bg-clip-text">AK Debt Planner</div>
+        </div>
+        <button id="recalculate-btn" class="flex items-center bg-indigo-100 hover:bg-indigo-200 text-indigo-700 py-2 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md">
+            <i class="fas fa-calculator mr-2"></i>
+            <span>Recalculate</span>
+        </button>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col p-6 md:px-12 mt-6">
+        <div class="w-full max-w-4xl mx-auto">
+            <!-- Initial Form -->
+            <div id="form-container" class="bg-white shadow-xl rounded-xl p-8 mx-auto transition-all duration-300 border border-indigo-100">
+                <h2 class="text-2xl font-bold text-center bg-gradient-to-r from-indigo-600 to-purple-700 text-transparent bg-clip-text mb-8">Debt Repayment Calculator</h2>
+                <form id="debt-form" class="space-y-6">
+                    <div class="relative">
+                        <label class="text-sm font-medium text-gray-700 mb-1 block">Total Debt Amount</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
+                            <input type="number" name="debt" placeholder="10000" step="0.01" required 
+                                   class="w-full pl-8 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigoMob-500 focus:border-indigo-500 transition-all shadow-sm">
+                        </div>
+                    </div>
+                    
+                    <div class="relative">
+                        <label class="text-sm font-medium text-gray-700 mb-1 block">Annual Interest Rate</label>
+                        <div class="relative">
+                            <input type="number" name="interest" placeholder="5.5" step="0.01" required 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm">
+                            <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500">%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="relative">
+                        <label class="text-sm font-medium text-gray-700 mb-1 block">Monthly Payment</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
+                            <input type="number" name="monthly" placeholder="300" step="0.01" required 
+                                   class="w-full pl-8 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" 
+                            class="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-purple-700 text-white font-semibold rounded-lg hover:from-indigo-700 hover:to-purple-800 transition-all duration-300 shadow-lg pulse-button">
+                        <i class="fas fa-chart-line mr-2"></i>
+                        Calculate My Debt Plan
+                    </button>
+                </form>
+            </div>
+
+            <!-- Combined Results and Chat Interface -->
+            <div id="chat-container" class="hidden flex flex-col h-full max-w-4xl mx-auto">
+                <div id="chat-history-container" class="bg-white shadow-xl rounded-xl p-6 flex-grow overflow-y-auto max-h-[70vh] border border-indigo-100">
+                    <div id="message" class="hidden bg-indigo-50 p-4 rounded-lg border-l-4 border-indigo-500 mb-6">
+                        <div class="flex items-center">
+                            <div class="bg-indigo-100 p-2 rounded-full mr-3">
+                                <i class="fas fa-calculator text-indigo-600"></i>
+                            </div>
+                            <p id="message-text" class="font-medium"></p>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <h3 class="text-xl font-semibold text-purple-700 mb-4">AI Financial Advisor</h3>
+                        <div class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium inline-block mb-4">
+                            <i class="fas fa-circle text-xs text-green-500 mr-1"></i>
+                            Active
+                        </div>
+                    </div>
+                    <div id="chat-history" class="space-y-4"></div>
+                </div>
+            
+                <div class="mt-4 w-full max-w-4xl mx-auto">
+                    <form id="chat-form" class="flex items-center bg-white rounded-xl shadow-lg border border-indigo-100 overflow-hidden">
+                        <input type="text" name="chat_input" placeholder="Ask about your debt repayment plan..." required 
+                               class="flex-grow px-4 py-4 border-0 focus:outline-none focus:ring-0">
+                        <button type="submit" class="bg-gradient-to-r from-indigo-600 to-purple-700 text-white px-5 py-4 hover:from-indigo-700 hover:to-purple-800 transition-all duration-300">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full bg-gray-900 text-white py-4 text-center text-sm">
+        <p>AK Debt Planner © 2025 | Created And Designed By Arun & Kaif | Helping you achieve financial freedom</p>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // Initialize state
+        let state = JSON.parse(localStorage.getItem('debtPlannerState')) || {
+            chatHistory: [],
+            debtData: null,
+            message: '',
+            explanation: '',
+            showChat: false
+        };
+
+        // Save state to localStorage
+        function saveState() {
+            localStorage.setItem('debtPlannerState', JSON.stringify(state));
+        }
+
+        // Debt calculation function (ported from Python)
+        function calculateDebtPlan(debtAmount, interestRate, monthlyPayment) {
+            const monthlyInterest = interestRate / 100 / 12;
+            let months = 0;
+            let totalInterest = 0;
+            let remainingDebt = debtAmount;
+            const monthlyDetails = [];
+
+            while (remainingDebt > 0 && months < 600) {
+                const interest = remainingDebt * monthlyInterest;
+                totalInterest += interest;
+                let principalPayment = monthlyPayment - interest;
+
+                if (principalPayment <= 0) {
+                    return null;
+                }
+
+                if (principalPayment > remainingDebt) {
+                    principalPayment = remainingDebt;
+                    monthlyPayment = principalPayment + interest;
+                }
+
+                remainingDebt -= principalPayment;
+                months++;
+
+                if (months <= 12 || months % 12 === 0 || remainingDebt <= 0) {
+                    monthlyDetails.push({
+                        month: months,
+                        payment: monthlyPayment,
+                        principal: principalPayment,
+                        interest: interest,
+                        remaining: remainingDebt
+                    });
+                }
+            }
+
+            const totalPaid = debtAmount + totalInterest;
+            return {
+                months: months,
+                years: months / 12,
+                totalPaid: totalPaid,
+                totalInterest: totalInterest,
+                originalDebt: debtAmount,
+                interestRate: interestRate,
+                monthlyPayment: monthlyPayment,
+                monthlyDetails: monthlyDetails
+            };
+        }
+
+        // Format date
+        function getCurrentDate() {
+            return new Date().toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        }
+
+        // Call Gemini API
+        async function callGeminiAPI(prompt) {
+            const apiKey = 'AIzaSyA-1YRLQsX9M5KyXxMqoItxESSThVF-cHY'; // Replace with your Gemini API key
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }]
+                    })
+                });
+                const data = await response.json();
+                return data.candidates[0].content.parts[0].text;
+            } catch (error) {
+                console.error('API Error:', error);
+                return 'Sorry, there was an error contacting the AI advisor. Please try again.';
+            }
+        }
+
+        // Render chat history
+        function renderChatHistory() {
+            const chatHistoryDiv = document.getElementById('chat-history');
+            chatHistoryDiv.innerHTML = '';
+            state.chatHistory.forEach(chat => {
+                if (chat.user !== 'Initial Plan') {
+                    chatHistoryDiv.innerHTML += `
+                        <div class="chat-bubble flex justify-end mb-4">
+                            <div class="bg-indigo-100 p-4 rounded-2xl rounded-tr-none max-w-[80%] shadow-sm">
+                                <p class="text-gray-800">${chat.user}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+                chatHistoryDiv.innerHTML += `
+                    <div class="chat-bubble flex justify-start mb-4">
+                        <div class="bg-white border border-gray-200 p-4 rounded-2xl rounded-tl-none max-w-[90%] shadow-sm">
+                            <p class="text-gray-800">${chat.ai}</p>
+                        </div>
+                    </div>
+                `;
+            });
+            if (state.showChat) {
+                document.getElementById('chat-container').classList.remove('hidden');
+                document.getElementById('form-container').classList.add('hidden');
+                document.getElementById('message').classList.remove('hidden');
+                document.getElementById('message-text').textContent = state.message;
+                chatHistoryDiv.scrollTop = chatHistoryDiv.scrollHeight;
+            }
+        }
+
+        // Handle debt form submission
+        document.getElementById('debt-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const debt = parseFloat(formData.get('debt'));
+            const interest = parseFloat(formData.get('interest'));
+            const monthly = parseFloat(formData.get('monthly'));
+
+            const result = calculateDebtPlan(debt, interest, monthly);
+            if (result) {
+                const { months, years, totalPaid, totalInterest } = result;
+                state.message = `It will take ${months} months (${years.toFixed(1)} years) to pay off your $${debt.toFixed(2)} debt. You'll pay $${totalPaid.toFixed(2)} in total, which includes $${totalInterest.toFixed(2)} in interest.`;
+                
+                const prompt = `
+                    Today is ${getCurrentDate()}. I have a debt of $${debt.toFixed(2)} with an annual interest rate of ${interest}%. I can afford to pay $${monthly.toFixed(2)} per month. Based on these numbers:
+                    1. It will take me ${months} months (${years.toFixed(1)} years) to pay off this debt
+                    2. I'll pay $${totalInterest.toFixed(2)} in interest charges
+                    3. My total payment will be $${totalPaid.toFixed(2)}
+                    As a financial advisor, please:
+                    1. Explain this plan in a clear, friendly way
+                    2. Suggest 2-3 actionable strategies to pay off this debt faster
+                    3. Explain how much I could save by implementing these strategies
+                    Make your response conversational but concise (3-4 paragraphs maximum). Don't use bullet points or numbered lists.
+                `;
+                
+                state.debtData = { debt, interest, monthly, months, years, totalInterest, totalPaid, monthlyDetails: result.monthlyDetails };
+                state.explanation = await callGeminiAPI(prompt);
+                state.chatHistory = [{ user: 'Initial Plan', ai: state.explanation }];
+                state.showChat = true;
+            } else {
+                state.message = 'Your monthly payment is too low to cover the interest! You\'ll never pay off this debt with that payment.';
+                const monthlyMin = debt * (interest / 100 / 12);
+                state.explanation = `You need to increase your monthly payment to at least $${monthlyMin.toFixed(2)} to cover the monthly interest. With your current payment of $${monthly.toFixed(2)}, your debt will continue to grow instead of shrink.`;
+                state.showChat = false;
+            }
+
+            saveState();
+            renderChatHistory();
+        });
+
+        // Handle chat form submission
+        document.getElementById('chat-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const chatHistoryDiv = document.getElementById('chat-history');
+            const scrollHeight = chatHistoryDiv.scrollHeight;
+            const clientHeight = chatHistoryDiv.clientHeight;
+            const isAtBottom = chatHistoryDiv.scrollTop + clientHeight >= scrollHeight - 10;
+
+            const formData = new FormData(e.target);
+            const userMessage = formData.get('chat_input');
+            chatHistoryDiv.innerHTML += `
+                <div class="chat-bubble flex justify-end mb-4">
+                    <div class="bg-indigo-100 p-4 rounded-2xl rounded-tr-none max-w-[80%] shadow-sm">
+                        <p class="text-gray-800">${userMessage}</p>
+                    </div>
+                </div>
+                <div id="typing-indicator" class="chat-bubble flex justify-start mb-4">
+                    <div class="bg-white border border-gray-200 p-4 rounded-2xl rounded-tl-none max-w-[90%] shadow-sm">
+                        <div class="flex space-x-2">
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            chatHistoryDiv.scrollTop = chatHistoryDiv.scrollHeight; // Ensure scroll to bottom
+
+            const recentHistory = state.chatHistory.slice(-3).map(chat => 
+                chat.user !== 'Initial Plan' ? `User: ${chat.user}\nAI: ${chat.ai}\n\n` : ''
+            ).join('');
+            const prompt = `
+                Today is ${getCurrentDate()}. User asked: '${userMessage}'
+                Recent conversation:
+                ${recentHistory}
+                Context: User has a debt of $${state.debtData?.debt.toFixed(2) || 0} with ${state.debtData?.interest || 0}% annual interest. Their monthly payment is $${state.debtData?.monthly.toFixed(2) || 0}. It will take ${state.debtData?.months || 0} months (${state.debtData?.years.toFixed(1) || 0} years) to pay off. They'll pay $${state.debtData?.totalInterest.toFixed(2) || 0} in interest and $${state.debtData?.totalPaid.toFixed(2) || 0} total.
+                Response guidelines:
+                1. If the user asks who created you (e.g., "who created you", "who made you"), respond exactly: "Arun Sharma and Mohammad Kaif Iqbal have created me."
+                2. If the user asks who trained you (e.g., "who trained you", "who taught you"), respond exactly: "Arun Sharma and Mohammad Kaif Iqbal have trained me."
+                3. If the question is unrelated to debt repayment or personal finance (e.g., sports, weather, or other non-financial topics), respond exactly: "I'm here to help with debt repayment questions only. Please ask about your debt plan or related financial topics."
+                4. Only answer questions related to debt repayment or personal finance. For finance-related questions, answer in a friendly, conversational, and helpful tone
+                5. If they ask about paying off debt faster, provide specific actionable advice
+                6. If they ask about impact of additional payments, provide calculations
+                7. If they ask about financial concepts, explain them simply
+                8. Keep responses concise (2-3 paragraphs)
+                9. Don't use bullet points or numbered lists
+                10. Start your response directly answering their question without any preamble
+            `;
+            
+            const response = await callGeminiAPI(prompt);
+            state.chatHistory.push({ user: userMessage, ai: response });
+            document.getElementById('typing-indicator').remove();
+            saveState();
+            renderChatHistory();
+            if (isAtBottom) chatHistoryDiv.scrollTop = chatHistoryDiv.scrollHeight;
+            e.target.querySelector('input[name="chat_input"]').value = '';
+            e.target.querySelector('input[name="chat_input"]').focus();
+        });
+
+        // Handle recalculate button
+        document.getElementById('recalculate-btn').addEventListener('click', () => {
+            state = { chatHistory: [], debtData: null, message: '', explanation: '', showChat: false };
+            saveState();
+            document.getElementById('chat-container').classList.add('hidden');
+            document.getElementById('form-container').classList.remove('hidden');
+            document.getElementById('chat-history').innerHTML = '';
+            window.scrollTo(0, 0);
+        });
+
+        // Initial render
+        renderChatHistory();
+    </script>
+</body>
+</html>
