@@ -2,7 +2,7 @@
 
 **AK Debt Planner** is a modern and interactive web application designed to help users calculate a customized debt repayment plan and receive tailored advice from an AI financial advisor powered by Gemini API.
 
-🌐 [AK DEBT PLANNER](https://arun0041.github.io/AI-DEBT-PLANNER/)
+🌐 [AK DEBT PLANNER](http://arun.42web.io/)
 
 ## 🚀 Features
 
